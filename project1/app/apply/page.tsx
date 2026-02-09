@@ -1,9 +1,6 @@
-
-
 "use client";
 
 import { useState } from "react";
-// import { NextResponse } from "next/server";
 import axios from "axios";
 
 const styles = {
@@ -199,6 +196,14 @@ export default function ApplyPage() {
       return;
     }
 
+    const n8nWebhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
+
+    if (!n8nWebhookUrl) {
+      setMessage("N8N webhook URL is missing. Please contact support.");
+      setMessageType("error");
+      return;
+    }
+
     setLoading(true);
     setMessage("");
 
@@ -206,61 +211,55 @@ export default function ApplyPage() {
       let resumeData = {};
 
       if (resumeType === "link") {
-        resumeData = { resumeLink: formData.resumeLink };
-      } else {
+        resumeData = { 
+          resumeFile: {
+            name: formData.resumeLink,
+            type: "link"
+          }
+        };
+      } else if (formData.resumeFile) {
         // Convert file to base64 for sending to n8n
         const reader = new FileReader();
-        await new Promise((resolve) => {
+        const base64Data = await new Promise<string>((resolve) => {
           reader.onload = () => {
-            resumeData = {
-              resumeFile: {
-                name: formData.resumeFile?.name,
-                type: formData.resumeFile?.type,
-                size: formData.resumeFile?.size,
-                data: reader.result,
-              },
-            };
-            resolve(null);
+            resolve(reader.result as string);
           };
           reader.readAsDataURL(formData.resumeFile!);
         });
-      }
 
-      // // Send to n8n webhook
-      // const n8nWebhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
-      
-      // if (!n8nWebhookUrl) {
-      //   setMessage("Form configuration error. Please contact support.");
-      //   setMessageType("error");
-      //   setLoading(false);
-      //   return;
-      // }
+        resumeData = {
+          resumeFile: {
+            name: formData.resumeFile.name,
+            type: formData.resumeFile.type,
+            size: formData.resumeFile.size,
+            data: base64Data,
+          },
+        };
+      }
 
       const payload = {
-        name: formData.name,
-        email: formData.email,
-        resumeType,
-        ...resumeData,
-        submittedAt: new Date().toISOString(),
+        body: {
+          name: formData.name,
+          email: formData.email,
+          resumeType,
+          ...resumeData,
+          submittedAt: new Date().toISOString(),
+        }
       };
 
-      // await axios.post("/api/apply", payload);
-      const n8nWebhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
-
-      if (!n8nWebhookUrl) {
-        throw new Error("N8N webhook URL is missing");
-      }
-
-      await axios.post(n8nWebhookUrl, payload, {
+      const response = await axios.post(n8nWebhookUrl, payload, {
         headers: {
           "Content-Type": "application/json",
         },
       });
 
-
-      setMessage("✓ Application submitted successfully! We'll review it and get back to you soon.");
-      setMessageType("success");
-      setFormData({ name: "", email: "", resumeLink: "", resumeFile: null });
+      if (response.data.ok) {
+        setMessage("✓ Application submitted successfully! We'll review it and get back to you soon.");
+        setMessageType("success");
+        setFormData({ name: "", email: "", resumeLink: "", resumeFile: null });
+      } else {
+        throw new Error("Submission failed");
+      }
     } catch (err: any) {
       console.error("Submission error:", err);
       setMessage(
