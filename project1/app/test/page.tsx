@@ -1,12 +1,13 @@
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+export const revalidate = 0;
+
 "use client";
 
 import React, { useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import TestShell from "../../components/TestShell";
 import CameraGuard from "./CameraGuard";
-
-// Force dynamic rendering to prevent build-time errors
-export const dynamic = 'force-dynamic';
 
 function TestContent() {
   const searchParams = useSearchParams();
