@@ -5,6 +5,9 @@ import { useSearchParams } from "next/navigation";
 import TestShell from "../../components/TestShell";
 import CameraGuard from "./CameraGuard";
 
+// Add this export to force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 function TestContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
