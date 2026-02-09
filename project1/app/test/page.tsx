@@ -1,52 +1,52 @@
-"use client";
+  "use client";
 
-import React, { useState, useRef } from "react";
-import { useSearchParams } from "next/navigation";
-import TestShell from "../../components/TestShell";
-import CameraGuard from "./CameraGuard";
+  import React, { useState, useRef } from "react";
+  import { useSearchParams } from "next/navigation";
+  import TestShell from "../../components/TestShell";
+  import CameraGuard from "./CameraGuard";
 
-export default function TestLinkPage() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token");
-  const [attemptId, setAttemptId] = useState<string>("");
-  const testShellRef = useRef<any>(null);
+  export default function TestLinkPage() {
+    const searchParams = useSearchParams();
+    const token = searchParams.get("token");
+    const [attemptId, setAttemptId] = useState<string>("");
+    const testShellRef = useRef<any>(null);
 
-  if (!token || token === "invalid") {
+    if (!token || token === "invalid") {
+      return (
+        <div style={{ padding: 20 }}>
+          <h2>Invalid test link</h2>
+          <p>Please check your URL.</p>
+        </div>
+      );
+    }
+
+    const handleCameraStatusChange = (status: string, count: number, type?: string) => {
+      // Update TestShell component when camera violations lock the test
+      if (testShellRef.current?.updateStatus) {
+        testShellRef.current.updateStatus(status, count, type);
+      }
+    };
+
+    const handleCameraCounterUpdate = (count: number) => {
+      if (testShellRef.current?.updateCameraViolations) {
+        testShellRef.current.updateCameraViolations(count);
+      }
+    };
+
     return (
-      <div style={{ padding: 20 }}>
-        <h2>Invalid test link</h2>
-        <p>Please check your URL.</p>
-      </div>
+      <>
+        {attemptId && (
+          <CameraGuard 
+            attemptId={attemptId} 
+            onStatusChange={handleCameraStatusChange}
+            onCounterUpdate={handleCameraCounterUpdate}
+          />
+        )}
+        <TestShell 
+          ref={testShellRef}
+          token={token} 
+          onAttemptIdReceived={setAttemptId} 
+        />
+      </>
     );
   }
-
-  const handleCameraStatusChange = (status: string, count: number, type?: string) => {
-    // Update TestShell component when camera violations lock the test
-    if (testShellRef.current?.updateStatus) {
-      testShellRef.current.updateStatus(status, count, type);
-    }
-  };
-
-  const handleCameraCounterUpdate = (count: number) => {
-    if (testShellRef.current?.updateCameraViolations) {
-      testShellRef.current.updateCameraViolations(count);
-    }
-  };
-
-  return (
-    <>
-      {attemptId && (
-        <CameraGuard 
-          attemptId={attemptId} 
-          onStatusChange={handleCameraStatusChange}
-          onCounterUpdate={handleCameraCounterUpdate}
-        />
-      )}
-      <TestShell 
-        ref={testShellRef}
-        token={token} 
-        onAttemptIdReceived={setAttemptId} 
-      />
-    </>
-  );
-}

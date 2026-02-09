@@ -1,6 +1,9 @@
+
+
 "use client";
 
 import { useState } from "react";
+// import { NextResponse } from "next/server";
 import axios from "axios";
 
 const styles = {
@@ -223,15 +226,15 @@ export default function ApplyPage() {
         });
       }
 
-      // Send to n8n webhook
-      const n8nWebhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
+      // // Send to n8n webhook
+      // const n8nWebhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
       
-      if (!n8nWebhookUrl) {
-        setMessage("Form configuration error. Please contact support.");
-        setMessageType("error");
-        setLoading(false);
-        return;
-      }
+      // if (!n8nWebhookUrl) {
+      //   setMessage("Form configuration error. Please contact support.");
+      //   setMessageType("error");
+      //   setLoading(false);
+      //   return;
+      // }
 
       const payload = {
         name: formData.name,
@@ -241,7 +244,19 @@ export default function ApplyPage() {
         submittedAt: new Date().toISOString(),
       };
 
-      await axios.post(n8nWebhookUrl, payload);
+      // await axios.post("/api/apply", payload);
+      const n8nWebhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
+
+      if (!n8nWebhookUrl) {
+        throw new Error("N8N webhook URL is missing");
+      }
+
+      await axios.post(n8nWebhookUrl, payload, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
 
       setMessage("✓ Application submitted successfully! We'll review it and get back to you soon.");
       setMessageType("success");
